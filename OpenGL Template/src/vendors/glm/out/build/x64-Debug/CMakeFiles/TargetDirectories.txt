@@ -1,0 +1,2 @@
+C:/Dev/C++/Projects/OpenGL Template/OpenGL-Template/OpenGL Template/src/vendors/glm/out/build/x64-Debug/CMakeFiles/edit_cache.dir
+C:/Dev/C++/Projects/OpenGL Template/OpenGL-Template/OpenGL Template/src/vendors/glm/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir
