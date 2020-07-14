@@ -31,6 +31,7 @@ public:
 	void setUniform1d(const char* name, double val);
 	void setUniformMat4fv(const char* name, glm::mat4&);
 	void setUniformBool(const char* name, bool val);
+	void setUniformVec2(const char*, glm::vec2& val);
 	void Bind();
 	void Unbind();
 };

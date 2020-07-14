@@ -3,6 +3,7 @@
 layout (location = 0) out vec4 color;
 in float vertexX;
 in float vertexY;
+in vec2 vec;
 
 uniform float r_Comp;
 uniform float z_Comp;
@@ -12,6 +13,7 @@ uniform bool mandelbrot;
 void main() {
 
 	color = vec4(0, 0, 0, 1);
+	color = vec4(vec.x/10.0, vec.y/10.0, vec.x/10.0, 1);
 	const int max_itrs = 200;
 
 	if (!mandelbrot) {

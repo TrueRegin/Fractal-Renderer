@@ -7,13 +7,15 @@ Config::Config()
 	TITLE("Fractal Renderer"),
 	VERTEX_START_STRING("$vertex"),
 	FRAGMENT_START_STRING("$fragment"),
-	BG_COLOR({ 0, 0, 1 }),
+	BG_COLOR({ 0, 0, 0 }),
 	SPEED(5),
-	VIEW_LEFT(-3.f),
-	VIEW_RIGHT(3.f),
-	VIEW_BOTTOM(-3.f),
-	VIEW_TOP(3.f),
-	SENSITIVITY(0.009)
+	VIEW_LEFT(-320.f),
+	VIEW_RIGHT(320.f),
+	VIEW_BOTTOM(-320.f),
+	VIEW_TOP(320.f),
+	CELL_WIDTH(160),
+	AXIS_SIZE({5.f, 5.f}),
+	SENSITIVITY(0.5)
 {}
 
 Config& c() {

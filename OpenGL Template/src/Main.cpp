@@ -3,39 +3,71 @@
 #include "ShaderManager.h"
 #include <glm\glm.hpp>
 #include <glm\matrix.hpp>
- 
+#include <iostream>
+#include <fstream>
+#include <vector> 
+
 float x = 0, currX = 0;
 float y = 0, currY = 0;
+float rotation = 0, currRotation = 0;
 
 bool mousePressed = false;
+bool rightMousePressed = false;
 bool menuHovered = false;
 bool showMenu = false;
 bool mandelbrotMode = false;
-double mStartX, mStartY;
 
+double mStartX, mStartY;
+double mStartXRot, mStartYRot;
 double zoomAmt = 1;
 double zoomIndex;
-const float WIDTH = c().VIEW_RIGHT * 2;
-// VIEW_BOTTOM, not VIEW_TOP because mouse coords and graph coords are different on the y-axis
-const float HEIGHT = c().VIEW_TOP * 2;
 
+float
+VIEW_RIGHT =c().AXIS_SIZE.x * c().CELL_WIDTH / 2,
+VIEW_LEFT = c().AXIS_SIZE.x * c().CELL_WIDTH / -2,
+VIEW_BOTTOM = c().AXIS_SIZE.y * c().CELL_WIDTH / -2,
+VIEW_TOP = c().AXIS_SIZE.y * c().CELL_WIDTH / 2;
+
+const float WIDTH = VIEW_RIGHT * 2;
+// VIEW_BOTTOM, not VIEW_TOP because mouse coords and graph coords are different on the y-axis
+const float HEIGHT = VIEW_TOP * 2;
 float visWidth = WIDTH / (float)zoomAmt;
 float visHeight = HEIGHT / (float)zoomAmt;
 
+int windowWidth = (int) VIEW_RIGHT * 2;
+int windowHeight = (int) VIEW_TOP * 2;
+
+void imageTest(GLFWwindow* window) {
+	//int width, height;
+	//printf("writing image to test.bmp. . .");
+	//glfwGetFramebufferSize(window, &width, &height);
+	//std::vector<GLuint> image(width * height);
+	//glReadPixels(0, 0, width, height, GL_RGBA, GL_BYTE, image.data());
+
+	//std::ofstream file;
+	//// Stores in raw rgba data
+	//file.open("screenshots/screenshot");
+	//	
+	//for (int i = 0; i < image.size(); i++) {
+	//	file << (const char) image[i];
+	//}
+	//file.close();
+}
+
 // Clamps the zoom to only where we can see the square in OpenGL
 void clampPanArea(float& newX, float& newY) {
-	if (newX + visWidth / 2 > (float)c().VIEW_RIGHT) {
-		newX = c().VIEW_RIGHT - visWidth / 2;
+	if (newX + visWidth / 2 > (float)VIEW_RIGHT) {
+		newX = VIEW_RIGHT - visWidth / 2;
 	}
-	else if (newX - visWidth / 2 < (float)c().VIEW_LEFT) {
-		newX = c().VIEW_LEFT + visWidth / 2;
+	else if (newX - visWidth / 2 < (float)VIEW_LEFT) {
+		newX = VIEW_LEFT + visWidth / 2;
 	}
 
-	if (newY + visHeight / 2 > (float)c().VIEW_TOP) {
-		newY = c().VIEW_TOP - visHeight / 2;
+	if (newY + visHeight / 2 > (float)VIEW_TOP) {
+		newY = VIEW_TOP - visHeight / 2;
 	}
-	else if (newY - visHeight / 2 < (float)c().VIEW_BOTTOM) {
-		newY = c().VIEW_BOTTOM + visHeight / 2;
+	else if (newY - visHeight / 2 < (float)VIEW_BOTTOM) {
+		newY = VIEW_BOTTOM + visHeight / 2;
 	}
 }
 
@@ -63,11 +95,17 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 		float newX = x + c().SENSITIVITY * (1 / std::abs(zoomAmt)) * (xpos - mStartX);
 		float newY = y - c().SENSITIVITY * (1 / std::abs(zoomAmt)) * (ypos - mStartY);
 
-		printf("%f %f\n", newX, newY);
 		clampPanArea(newX, newY);
 
 		currX = newX;
 		currY = newY;
+	}
+
+	if (rightMousePressed && !menuHovered) {
+		//float directionalSlope = (ypos - mStartYRot) / (xpos - mStartXRot);
+		int d_Width, d_Height;
+		glfwGetFramebufferSize(window, &d_Width, &d_Height);
+		currRotation = -std::atan2f(ypos - d_Height/2, xpos - d_Width/2) * 180 / (2 * acos(0.0)); // 2 * acos(0.0) is pi, C++ doesn't have a pi variable by default :/
 	}
 }
 
@@ -81,6 +119,14 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		mousePressed = false;
 		x = currX;
 		y = currY;
+	}
+	if (action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_2) {
+		glfwGetCursorPos(window, &mStartXRot, &mStartYRot);
+		rightMousePressed = true;
+	}
+	else if (action == GLFW_RELEASE && button == GLFW_MOUSE_BUTTON_2) {
+		rightMousePressed = false;
+		rotation = currRotation;
 	}
 }
 
@@ -96,6 +142,13 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			break;
 		case GLFW_KEY_E:
 			mandelbrotMode = !mandelbrotMode;
+			break;
+		case GLFW_KEY_PRINT_SCREEN:
+			imageTest(window);
+			break;
+		case GLFW_KEY_R:
+			rotation = 0;
+			currRotation = 0;
 			break;
 		}
 	}
@@ -129,26 +182,28 @@ int main() {
 	{
 		ShaderProgram shader("res/shaders/vertex.shader", "res/shaders/fragment.shader");
 		shader.Bind();
-		glm::mat4 projMat = glm::ortho((float) c().VIEW_LEFT, (float) c().VIEW_RIGHT, (float) c().VIEW_BOTTOM, (float) c().VIEW_TOP, -1.f, 1.f);
+		glm::mat4 projMat = glm::ortho((float) VIEW_LEFT, (float) VIEW_RIGHT, (float) VIEW_BOTTOM, (float) VIEW_TOP, -1.f, 1.f);
 		glm::mat4 viewMat = glm::mat4(1.0f);
 		viewMat = glm::scale(viewMat, glm::vec3(1.0));
+		glm::mat4 modelMat = glm::mat4(1.0f);
+		modelMat = glm::scale(modelMat, glm::vec3(1.0f));
 		shader.setUniformMat4fv("u_ProjMat", projMat);
 		shader.setUniformMat4fv("u_ViewMat", viewMat);
+		shader.setUniformMat4fv("u_ModelMat", modelMat);
 
 		glfwSetScrollCallback(window, scroll_callback);
 		glfwSetMouseButtonCallback(window, mouse_button_callback);
 		glfwSetCursorPosCallback(window, cursor_position_callback);
-		glfwSetFramebufferSizeCallback(window, window_resize_callback);
 		glfwSetKeyCallback(window, key_callback);
 
 
 		const float vertices[] = {
-			c().VIEW_LEFT, c().VIEW_BOTTOM,
-			c().VIEW_RIGHT, c().VIEW_BOTTOM,
-			c().VIEW_RIGHT, c().VIEW_TOP,
-			c().VIEW_RIGHT, c().VIEW_TOP,
-			c().VIEW_LEFT, c().VIEW_TOP,
-			c().VIEW_LEFT, c().VIEW_BOTTOM,
+			VIEW_LEFT, VIEW_BOTTOM,
+			VIEW_RIGHT, VIEW_BOTTOM,
+			VIEW_RIGHT, VIEW_TOP,
+			VIEW_RIGHT, VIEW_TOP,
+			VIEW_LEFT, VIEW_TOP,
+			VIEW_LEFT, VIEW_BOTTOM,
 		};
 
 		unsigned int vao;
@@ -171,9 +226,12 @@ int main() {
 		shader.setUniform1f("r_Comp", realComponent);
 		// Imaginary component of the Julia set equation
 		shader.setUniform1f("z_Comp", imaginaryComponent);
+		glm::vec2 axis = { 4, 4 };
+		shader.setUniformVec2("axis", axis);
 
-		programLoop(window, [&shader, &viewMat, &realComponent, &imaginaryComponent, &rFac, &gFac, &bFac]() {
+		programLoop(window, [&shader, &viewMat, &modelMat, &realComponent, &imaginaryComponent, &rFac, &gFac, &bFac, &window]() {
 			viewMat = glm::mat4(1.0);
+			viewMat = glm::rotate(viewMat, glm::radians(currRotation), glm::vec3(0, 0, 1));
 			viewMat = glm::scale(viewMat, glm::vec3(zoomAmt));
 			viewMat = glm::translate(viewMat, glm::vec3(currX, currY, 0.0));
 
@@ -181,8 +239,6 @@ int main() {
 				ImGui::Begin("Modify the fractal!");
 				ImGui::SliderFloat("Real Component", &realComponent, -4, 4);
 				ImGui::SliderFloat("Imaginary Component", &imaginaryComponent, -4, 4);
-
-				menuHovered = ImGui::IsWindowHovered() && ImGui::IsItemHovered();
 
 				ImGui::Text("Shading Components");
 				ImGui::SliderFloat("Red Factor", &rFac, 0, 1);
@@ -203,6 +259,31 @@ int main() {
 			shader.setUniform1f("bFac", bFac);
 			shader.setUniformBool("mandelbrot", mandelbrotMode);
 
+			int display_w, display_h;
+			glfwGetFramebufferSize(window, &display_w, &display_h);
+			glViewport(0, 0, display_w, display_h);
+			if (windowWidth != display_w || windowHeight != display_h) {
+				glm::mat4 newProj = glm::ortho(-display_w / 2.0f, display_w / 2.0f, -display_h / 2.0f, display_h / 2.0f);
+				shader.setUniformMat4fv("u_ProjMat", newProj);
+
+				windowWidth = display_w;
+				windowHeight = display_h;
+
+				float scaleFac = 1;
+
+				// Width is the main dimension
+				if (windowWidth < windowHeight) {
+					scaleFac = windowWidth / WIDTH;
+				}
+				// Height is the main dimension
+				else {
+					scaleFac = windowHeight / HEIGHT;
+				}
+
+				modelMat = glm::mat4(1.0f);
+				modelMat = glm::scale(modelMat, glm::vec3(scaleFac));
+				shader.setUniformMat4fv("u_ModelMat", modelMat);
+			}
 			glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / (2 * sizeof(float)));
 		});
 

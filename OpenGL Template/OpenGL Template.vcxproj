@@ -157,6 +157,7 @@
     <ClCompile Include="src\engine\ShaderManager.cpp" />
     <ClCompile Include="src\engine\TextureManager.cpp" />
     <ClCompile Include="src\utils\FileLoader.cpp" />
+    <ClCompile Include="src\utils\ImageWriter.cpp" />
     <ClCompile Include="src\vendors\glad\glad.c" />
     <ClCompile Include="src\vendors\glm\detail\glm.cpp" />
     <ClCompile Include="src\vendors\imgui\examples\imgui_impl_glfw.cpp" />
@@ -172,6 +173,7 @@
     <ClInclude Include="src\engine\ShaderManager.h" />
     <ClInclude Include="src\engine\TextureManager.h" />
     <ClInclude Include="src\utils\FileLoader.h" />
+    <ClInclude Include="src\utils\ImageWriter.h" />
     <ClInclude Include="src\vendors\glm\common.hpp" />
     <ClInclude Include="src\vendors\glm\detail\compute_common.hpp" />
     <ClInclude Include="src\vendors\glm\detail\compute_vector_relational.hpp" />

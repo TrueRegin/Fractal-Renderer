@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glm\vec3.hpp>
+#include <glm\glm.hpp>
 #include <unordered_map>
 
 struct Config {
@@ -12,6 +12,8 @@ struct Config {
 	const glm::vec3 BG_COLOR;
 	const float SPEED;
 	const double VIEW_LEFT, VIEW_RIGHT, VIEW_BOTTOM, VIEW_TOP;
+	const float CELL_WIDTH;
+	const glm::vec2 AXIS_SIZE;
 	const double SENSITIVITY;
 
 	Config();
