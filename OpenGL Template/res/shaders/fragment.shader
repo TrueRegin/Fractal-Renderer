@@ -14,7 +14,7 @@ void main() {
 
 	color = vec4(0, 0, 0, 1);
 	color = vec4(vec.x/10.0, vec.y/10.0, vec.x/10.0, 1);
-	const int max_itrs = 200;
+	const int max_itrs = 600;
 
 	if (!mandelbrot) {
 		float r = vertexX;
