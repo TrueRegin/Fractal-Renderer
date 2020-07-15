@@ -156,6 +156,10 @@ void ShaderProgram::setUniformBool(const char* name, bool val) {
 	glUniform1iv(getUniform(name), 1, &numVal);
 }
 
-void ShaderProgram::setUniformVec2(const char* name, glm::vec2& vector) {
+void ShaderProgram::setUniformVec2(const char* name, glm::vec2 vector) {
 	glUniform2fv(getUniform(name), 1, glm::value_ptr(vector));
+}
+
+void ShaderProgram::setUniformDVec2(const char* name, glm::dvec2 vector) {
+	glUniform2dv(getUniform(name), 1, glm::value_ptr(vector));
 }

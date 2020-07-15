@@ -15,6 +15,7 @@ struct Config {
 	const float CELL_WIDTH;
 	const glm::vec2 AXIS_SIZE;
 	const double SENSITIVITY;
+	const float CELL_SIZE;
 
 	Config();
 };
