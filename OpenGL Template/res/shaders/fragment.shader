@@ -1,27 +1,34 @@
 #version 460 core
 
 layout (location = 0) out vec4 color;
-in float vertexX;
-in float vertexY;
-in vec2 vec;
+in vec2 vertex;
 
 uniform float r_Comp;
 uniform float z_Comp;
 uniform float rFac, gFac, bFac;
 uniform bool mandelbrot;
 
+// Visible Dimensions on screen
+uniform vec2 visible;
+uniform dvec2 corner;
+uniform float cellSize; // 160
+uniform float scale;
+
 void main() {
 
 	color = vec4(0, 0, 0, 1);
-	color = vec4(vec.x/10.0, vec.y/10.0, vec.x/10.0, 1);
-	const int max_itrs = 600;
+	//const int max_itrs = 600;
+	float max_itrs = 20 + sqrt(scale);
+	if (max_itrs > 700) max_itrs = 700;
+
+	dvec2 pos = dvec2(corner.x + vertex.x * visible.x, corner.y + vertex.y * visible.y);
 
 	if (!mandelbrot) {
-		float r = vertexX;
-		float z = vertexY;
+		double r = pos.x;
+		double z = pos.y;
 		for (int i = 0; i < max_itrs; i++) {
-			float rr = r * r - z * z + r_Comp;
-			float zz = 2 * r * z + z_Comp;
+			double rr = r * r - z * z + r_Comp;
+			double zz = 2 * r * z + z_Comp;
 			r = rr;
 			z = zz;
 
@@ -32,12 +39,12 @@ void main() {
 		}
 	}
 	else {
-		float r = 0;
-		float z = 0;
+		double r = 0;
+		double z = 0;
 		
 		for (int i = 0; i < max_itrs; i++) {
-			float rr = r * r - z * z + vertexX;
-			float zz = 2 * r * z + vertexY;
+			double rr = r * r - z * z + pos.x;
+			double zz = 2 * r * z + pos.y;
 			r = rr;
 			z = zz;
 

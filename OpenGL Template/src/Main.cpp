@@ -7,8 +7,8 @@
 #include <fstream>
 #include <vector> 
 
-float x = 0, currX = 0;
-float y = 0, currY = 0;
+double x = 0, currX = 0;
+double y = 0, currY = 0;
 float rotation = 0, currRotation = 0;
 
 bool mousePressed = false;
@@ -23,7 +23,7 @@ double zoomAmt = 1;
 double zoomIndex;
 
 float
-VIEW_RIGHT =c().AXIS_SIZE.x * c().CELL_WIDTH / 2,
+VIEW_RIGHT = c().AXIS_SIZE.x * c().CELL_WIDTH / 2,
 VIEW_LEFT = c().AXIS_SIZE.x * c().CELL_WIDTH / -2,
 VIEW_BOTTOM = c().AXIS_SIZE.y * c().CELL_WIDTH / -2,
 VIEW_TOP = c().AXIS_SIZE.y * c().CELL_WIDTH / 2;
@@ -55,7 +55,7 @@ void imageTest(GLFWwindow* window) {
 }
 
 // Clamps the zoom to only where we can see the square in OpenGL
-void clampPanArea(float& newX, float& newY) {
+void clampPanArea(double& newX, double& newY) {
 	if (newX + visWidth / 2 > (float)VIEW_RIGHT) {
 		newX = VIEW_RIGHT - visWidth / 2;
 	}
@@ -71,13 +71,14 @@ void clampPanArea(float& newX, float& newY) {
 	}
 }
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+void mouse_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void mouse_position_callback(GLFWwindow* window, double xpos, double ypos);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void mouse_scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 	zoomIndex += yoffset;
 	if (zoomIndex < 0) zoomIndex = 0;
 	zoomAmt = std::pow(1.2, zoomIndex);
-	std::cout << 1 / zoomAmt << std::endl;
 	
 	visWidth = WIDTH / (float)zoomAmt;
 	visHeight = HEIGHT / (float)zoomAmt;
@@ -86,16 +87,17 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 	double mouseX, mouseY;
 	glfwGetCursorPos(window, &mouseX, &mouseY);
 }
-
-void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+void mouse_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
 
 	if (mousePressed && !menuHovered) {
 		
-		float newX = x + c().SENSITIVITY * (1 / std::abs(zoomAmt)) * (xpos - mStartX);
-		float newY = y - c().SENSITIVITY * (1 / std::abs(zoomAmt)) * (ypos - mStartY);
+		double newX = x + c().SENSITIVITY * (1 / std::abs(zoomAmt)) * (xpos - mStartX);
+		double newY = y - c().SENSITIVITY * (1 / std::abs(zoomAmt)) * (ypos - mStartY);
 
 		clampPanArea(newX, newY);
+
+		printf("%f %f\n", newX, newY);
 
 		currX = newX;
 		currY = newY;
@@ -108,7 +110,6 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 		currRotation = -std::atan2f(ypos - d_Height/2, xpos - d_Width/2) * 180 / (2 * acos(0.0)); // 2 * acos(0.0) is pi, C++ doesn't have a pi variable by default :/
 	}
 }
-
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
 
 	if (action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_1) {
@@ -129,11 +130,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		rotation = currRotation;
 	}
 }
-
-void window_resize_callback(GLFWwindow* window, int width, int height) {
-	glViewport(0, 0, width, height);
-}
-
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (action == GLFW_PRESS) {
 		switch (key) {
@@ -182,28 +178,22 @@ int main() {
 	{
 		ShaderProgram shader("res/shaders/vertex.shader", "res/shaders/fragment.shader");
 		shader.Bind();
-		glm::mat4 projMat = glm::ortho((float) VIEW_LEFT, (float) VIEW_RIGHT, (float) VIEW_BOTTOM, (float) VIEW_TOP, -1.f, 1.f);
-		glm::mat4 viewMat = glm::mat4(1.0f);
-		viewMat = glm::scale(viewMat, glm::vec3(1.0));
+		// To be used for rotation
 		glm::mat4 modelMat = glm::mat4(1.0f);
-		modelMat = glm::scale(modelMat, glm::vec3(1.0f));
-		shader.setUniformMat4fv("u_ProjMat", projMat);
-		shader.setUniformMat4fv("u_ViewMat", viewMat);
-		shader.setUniformMat4fv("u_ModelMat", modelMat);
 
-		glfwSetScrollCallback(window, scroll_callback);
+		glfwSetScrollCallback(window, mouse_scroll_callback);
 		glfwSetMouseButtonCallback(window, mouse_button_callback);
-		glfwSetCursorPosCallback(window, cursor_position_callback);
+		glfwSetCursorPosCallback(window, mouse_position_callback);
 		glfwSetKeyCallback(window, key_callback);
 
 
 		const float vertices[] = {
-			VIEW_LEFT, VIEW_BOTTOM,
-			VIEW_RIGHT, VIEW_BOTTOM,
-			VIEW_RIGHT, VIEW_TOP,
-			VIEW_RIGHT, VIEW_TOP,
-			VIEW_LEFT, VIEW_TOP,
-			VIEW_LEFT, VIEW_BOTTOM,
+			-1, -1,
+			1, -1,
+			1, 1,
+			1, 1,
+			-1, 1,
+			-1, -1
 		};
 
 		unsigned int vao;
@@ -218,23 +208,16 @@ int main() {
 		glEnableVertexAttribArray(0);
 
 		/**
-			Fractal settings
+			Static Uniforms
 		*/
 		float realComponent = 0, imaginaryComponent = 0;
 		float rFac = 0.3f, gFac = 0.3f, bFac = 0.3f;
-		// Real component of the Julia set equation
+		// Real & Imaginary components of the Julia set equation
 		shader.setUniform1f("r_Comp", realComponent);
-		// Imaginary component of the Julia set equation
 		shader.setUniform1f("z_Comp", imaginaryComponent);
-		glm::vec2 axis = { 4, 4 };
-		shader.setUniformVec2("axis", axis);
 
-		programLoop(window, [&shader, &viewMat, &modelMat, &realComponent, &imaginaryComponent, &rFac, &gFac, &bFac, &window]() {
-			viewMat = glm::mat4(1.0);
-			viewMat = glm::rotate(viewMat, glm::radians(currRotation), glm::vec3(0, 0, 1));
-			viewMat = glm::scale(viewMat, glm::vec3(zoomAmt));
-			viewMat = glm::translate(viewMat, glm::vec3(currX, currY, 0.0));
-
+		// Program Loop
+		programLoop(window, [&shader, &modelMat, &realComponent, &imaginaryComponent, &rFac, &gFac, &bFac, &window]() {
 			if (showMenu) {
 				ImGui::Begin("Modify the fractal!");
 				ImGui::SliderFloat("Real Component", &realComponent, -4, 4);
@@ -251,39 +234,26 @@ int main() {
 				ImGui::End();
 			}
 
-			shader.setUniformMat4fv("u_ViewMat", viewMat);
 			shader.setUniform1f("r_Comp", realComponent);
 			shader.setUniform1f("z_Comp", imaginaryComponent);
 			shader.setUniform1f("rFac", rFac);
 			shader.setUniform1f("gFac", gFac);
 			shader.setUniform1f("bFac", bFac);
 			shader.setUniformBool("mandelbrot", mandelbrotMode);
-
+			
 			int display_w, display_h;
 			glfwGetFramebufferSize(window, &display_w, &display_h);
 			glViewport(0, 0, display_w, display_h);
-			if (windowWidth != display_w || windowHeight != display_h) {
-				glm::mat4 newProj = glm::ortho(-display_w / 2.0f, display_w / 2.0f, -display_h / 2.0f, display_h / 2.0f);
-				shader.setUniformMat4fv("u_ProjMat", newProj);
 
-				windowWidth = display_w;
-				windowHeight = display_h;
+			// Set new uniforms
+			glm::vec2 visibleDims((1/zoomAmt) * (display_w / c().CELL_SIZE), (1 / zoomAmt) * (display_h / c().CELL_SIZE));
+			glm::dvec2 translation(currX, currY);
+			glm::dvec2 cornerPos(-translation.x - visibleDims.x / 2, -translation.y - visibleDims.y / 2);
+			//printf("%f, %f\n", cornerPos.x, cornerPos.y);
+			shader.setUniformDVec2("corner", cornerPos);
+			shader.setUniformVec2("visible", visibleDims);
+			shader.setUniform1d("scale", zoomAmt);
 
-				float scaleFac = 1;
-
-				// Width is the main dimension
-				if (windowWidth < windowHeight) {
-					scaleFac = windowWidth / WIDTH;
-				}
-				// Height is the main dimension
-				else {
-					scaleFac = windowHeight / HEIGHT;
-				}
-
-				modelMat = glm::mat4(1.0f);
-				modelMat = glm::scale(modelMat, glm::vec3(scaleFac));
-				shader.setUniformMat4fv("u_ModelMat", modelMat);
-			}
 			glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / (2 * sizeof(float)));
 		});
 

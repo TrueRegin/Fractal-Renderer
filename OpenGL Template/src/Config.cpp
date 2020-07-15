@@ -14,8 +14,9 @@ Config::Config()
 	VIEW_BOTTOM(-320.f),
 	VIEW_TOP(320.f),
 	CELL_WIDTH(160),
-	AXIS_SIZE({5.f, 5.f}),
-	SENSITIVITY(0.5)
+	AXIS_SIZE({ 5.f, 5.f }),
+	SENSITIVITY(0.01),
+	CELL_SIZE(160)
 {}
 
 Config& c() {
