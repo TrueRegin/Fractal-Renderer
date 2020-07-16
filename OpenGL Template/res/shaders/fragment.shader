@@ -13,6 +13,7 @@ uniform vec2 visible;
 uniform dvec2 corner;
 uniform float cellSize; // 160
 uniform float scale;
+uniform float rotationAngle;
 
 void main() {
 
@@ -22,6 +23,10 @@ void main() {
 	if (max_itrs > 700) max_itrs = 700;
 
 	dvec2 pos = dvec2(corner.x + vertex.x * visible.x, corner.y + vertex.y * visible.y);
+	float c = cos(rotationAngle);
+	float s = sin(rotationAngle);
+	dvec2 newPos = dvec2(pos.x * c - pos.y * s, pos.x * s + pos.y * c);
+	pos = newPos;
 
 	if (!mandelbrot) {
 		double r = pos.x;

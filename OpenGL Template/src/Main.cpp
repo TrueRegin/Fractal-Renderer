@@ -107,7 +107,7 @@ void mouse_position_callback(GLFWwindow* window, double xpos, double ypos)
 		//float directionalSlope = (ypos - mStartYRot) / (xpos - mStartXRot);
 		int d_Width, d_Height;
 		glfwGetFramebufferSize(window, &d_Width, &d_Height);
-		currRotation = -std::atan2f(ypos - d_Height/2, xpos - d_Width/2) * 180 / (2 * acos(0.0)); // 2 * acos(0.0) is pi, C++ doesn't have a pi variable by default :/
+		currRotation = std::atan2f(ypos - d_Height/2, xpos - d_Width/2) * 180 / (2 * acos(0.0)); // 2 * acos(0.0) is pi, C++ doesn't have a pi variable by default :/
 	}
 }
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -120,6 +120,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		mousePressed = false;
 		x = currX;
 		y = currY;
+		mStartX = x;
+		mStartY = y;
 	}
 	if (action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_2) {
 		glfwGetCursorPos(window, &mStartXRot, &mStartYRot);
@@ -253,6 +255,7 @@ int main() {
 			shader.setUniformDVec2("corner", cornerPos);
 			shader.setUniformVec2("visible", visibleDims);
 			shader.setUniform1d("scale", zoomAmt);
+			shader.setUniform1f("rotationAngle", glm::radians(currRotation));
 
 			glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / (2 * sizeof(float)));
 		});
