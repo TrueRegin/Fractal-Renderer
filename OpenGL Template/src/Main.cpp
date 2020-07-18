@@ -33,9 +33,12 @@ const float WIDTH = VIEW_RIGHT * 2;
 const float HEIGHT = VIEW_TOP * 2;
 float visWidth = WIDTH / (float)zoomAmt;
 float visHeight = HEIGHT / (float)zoomAmt;
+float startRotation;
 
 int windowWidth = (int) VIEW_RIGHT * 2;
 int windowHeight = (int) VIEW_TOP * 2;
+
+ImGuiIO* io = nullptr;
 
 void imageTest(GLFWwindow* window) {
 	//int width, height;
@@ -90,7 +93,7 @@ void mouse_scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 void mouse_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
 
-	if (mousePressed && !menuHovered) {
+	if (mousePressed && !(*io).WantCaptureMouse) {
 		
 		double newX = x + c().SENSITIVITY * (1 / std::abs(zoomAmt)) * (xpos - mStartX);
 		double newY = y - c().SENSITIVITY * (1 / std::abs(zoomAmt)) * (ypos - mStartY);
@@ -103,14 +106,18 @@ void mouse_position_callback(GLFWwindow* window, double xpos, double ypos)
 		currY = newY;
 	}
 
-	if (rightMousePressed && !menuHovered) {
+	if (rightMousePressed && !(*io).WantCaptureMouse) {
 		//float directionalSlope = (ypos - mStartYRot) / (xpos - mStartXRot);
 		int d_Width, d_Height;
 		glfwGetFramebufferSize(window, &d_Width, &d_Height);
-		currRotation = std::atan2f(ypos - d_Height/2, xpos - d_Width/2) * 180 / (2 * acos(0.0)); // 2 * acos(0.0) is pi, C++ doesn't have a pi variable by default :/
+		// 2 * acos(0.0) is pi, C++ doesn't have a pi variable by default :/
+		currRotation = std::atan2f(ypos - d_Height / 2, xpos - d_Width / 2) * 180 / (2 * acos(0.0)) - startRotation;
 	}
 }
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+
+	int display_w, display_h;
+	glfwGetFramebufferSize(window, &display_w, &display_h);
 
 	if (action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_1) {
 		glfwGetCursorPos(window, &mStartX, &mStartY);
@@ -126,6 +133,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	if (action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_2) {
 		glfwGetCursorPos(window, &mStartXRot, &mStartYRot);
 		rightMousePressed = true;
+		float startRotation = std::atan2f(mStartYRot - display_h / 2, mStartXRot - display_w / 2) * 180 / (2 * acos(0.0));
 	}
 	else if (action == GLFW_RELEASE && button == GLFW_MOUSE_BUTTON_2) {
 		rightMousePressed = false;
@@ -217,6 +225,10 @@ int main() {
 		// Real & Imaginary components of the Julia set equation
 		shader.setUniform1f("r_Comp", realComponent);
 		shader.setUniform1f("z_Comp", imaginaryComponent);
+
+
+		// ImGui Variables
+		io = &ImGui::GetIO(); (void)io;
 
 		// Program Loop
 		programLoop(window, [&shader, &modelMat, &realComponent, &imaginaryComponent, &rFac, &gFac, &bFac, &window]() {
