@@ -29,6 +29,8 @@ public:
 
 	void setUniform1f(const char* name, float val);
 	void setUniform1d(const char* name, double val);
+	void setUniform1i(const char* name, int val);
+	void setUniform1u(const char* name, unsigned int val);
 	void setUniformMat4fv(const char* name, glm::mat4&);
 	void setUniformBool(const char* name, bool val);
 	void setUniformVec2(const char*, glm::vec2 val);

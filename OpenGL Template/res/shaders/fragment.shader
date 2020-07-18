@@ -14,13 +14,11 @@ uniform dvec2 corner;
 uniform float cellSize; // 160
 uniform float scale;
 uniform float rotationAngle;
+uniform int max_itrs;
 
 void main() {
 
 	color = vec4(0, 0, 0, 1);
-	//const int max_itrs = 600;
-	float max_itrs = 20 + sqrt(scale);
-	if (max_itrs > 700) max_itrs = 700;
 
 	dvec2 pos = dvec2(corner.x + vertex.x * visible.x, corner.y + vertex.y * visible.y);
 	float c = cos(rotationAngle);

@@ -10,6 +10,7 @@
 double x = 0, currX = 0;
 double y = 0, currY = 0;
 float rotation = 0, currRotation = 0;
+float oldRotation = 0, startRotation = 0;
 
 bool mousePressed = false;
 bool rightMousePressed = false;
@@ -28,12 +29,16 @@ VIEW_LEFT = c().AXIS_SIZE.x * c().CELL_WIDTH / -2,
 VIEW_BOTTOM = c().AXIS_SIZE.y * c().CELL_WIDTH / -2,
 VIEW_TOP = c().AXIS_SIZE.y * c().CELL_WIDTH / 2;
 
+int max_itrs = 20;
+int approx_itrs = 100;
+float approx_itrs_scale = 1;
+bool max_itrs_approx_func = false;
+
 const float WIDTH = VIEW_RIGHT * 2;
 // VIEW_BOTTOM, not VIEW_TOP because mouse coords and graph coords are different on the y-axis
 const float HEIGHT = VIEW_TOP * 2;
 float visWidth = WIDTH / (float)zoomAmt;
 float visHeight = HEIGHT / (float)zoomAmt;
-float startRotation;
 
 int windowWidth = (int) VIEW_RIGHT * 2;
 int windowHeight = (int) VIEW_TOP * 2;
@@ -111,7 +116,8 @@ void mouse_position_callback(GLFWwindow* window, double xpos, double ypos)
 		int d_Width, d_Height;
 		glfwGetFramebufferSize(window, &d_Width, &d_Height);
 		// 2 * acos(0.0) is pi, C++ doesn't have a pi variable by default :/
-		currRotation = std::atan2f(ypos - d_Height / 2, xpos - d_Width / 2) * 180 / (2 * acos(0.0)) - startRotation;
+		float incRotationAmt = (std::atan2f(ypos - d_Height / 2, xpos - d_Width / 2) * 180 / (2 * acos(0.0))) - startRotation;
+		currRotation = oldRotation + incRotationAmt;
 	}
 }
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -133,7 +139,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	if (action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_2) {
 		glfwGetCursorPos(window, &mStartXRot, &mStartYRot);
 		rightMousePressed = true;
-		float startRotation = std::atan2f(mStartYRot - display_h / 2, mStartXRot - display_w / 2) * 180 / (2 * acos(0.0));
+		startRotation = std::atan2f(mStartYRot - display_h / 2, mStartXRot - display_w / 2) * 180 / (2 * acos(0.0));
+		oldRotation = currRotation;
 	}
 	else if (action == GLFW_RELEASE && button == GLFW_MOUSE_BUTTON_2) {
 		rightMousePressed = false;
@@ -232,6 +239,8 @@ int main() {
 
 		// Program Loop
 		programLoop(window, [&shader, &modelMat, &realComponent, &imaginaryComponent, &rFac, &gFac, &bFac, &window]() {
+			max_itrs -= max_itrs - std::floor(max_itrs);
+
 			if (showMenu) {
 				ImGui::Begin("Modify the fractal!");
 				ImGui::SliderFloat("Real Component", &realComponent, -4, 4);
@@ -241,6 +250,19 @@ int main() {
 				ImGui::SliderFloat("Red Factor", &rFac, 0, 1);
 				ImGui::SliderFloat("Green Factor", &gFac, 0, 1);
 				ImGui::SliderFloat("Blue Factor Factor", &bFac, 0, 1);
+				if (ImGui::Button("Approximate the Maximum Iterations")) {
+					max_itrs_approx_func = !max_itrs_approx_func;
+				}
+
+				if (max_itrs_approx_func) {
+					approx_itrs = 100 + std::sqrt(zoomAmt) * approx_itrs_scale;
+					ImGui::SliderFloat("Scale for approximation", &approx_itrs_scale, 1, 10);
+					std::string itrs_str = "Mat Iterations: " + std::to_string(approx_itrs);
+					ImGui::Text(itrs_str.c_str());
+				}
+				else {
+					ImGui::SliderInt("Max Iterations", &max_itrs, 20, 1000);
+				}
 
 				if (ImGui::Button(mandelbrotMode ? "Disable Mandelbrot Mode" : "Enable Mandelbrot Mode")) {
 					mandelbrotMode = !mandelbrotMode;
@@ -250,6 +272,7 @@ int main() {
 
 			shader.setUniform1f("r_Comp", realComponent);
 			shader.setUniform1f("z_Comp", imaginaryComponent);
+			shader.setUniform1i("max_itrs", max_itrs_approx_func ? approx_itrs : max_itrs);
 			shader.setUniform1f("rFac", rFac);
 			shader.setUniform1f("gFac", gFac);
 			shader.setUniform1f("bFac", bFac);
@@ -263,7 +286,6 @@ int main() {
 			glm::vec2 visibleDims((1/zoomAmt) * (display_w / c().CELL_SIZE), (1 / zoomAmt) * (display_h / c().CELL_SIZE));
 			glm::dvec2 translation(currX, currY);
 			glm::dvec2 cornerPos(-translation.x - visibleDims.x / 2, -translation.y - visibleDims.y / 2);
-			//printf("%f, %f\n", cornerPos.x, cornerPos.y);
 			shader.setUniformDVec2("corner", cornerPos);
 			shader.setUniformVec2("visible", visibleDims);
 			shader.setUniform1d("scale", zoomAmt);
