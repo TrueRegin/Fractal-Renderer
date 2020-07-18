@@ -147,6 +147,15 @@ void ShaderProgram::setUniform1d(const char* name, double val) {
 	glUniform1dv(getUniform(name), 1, &val);
 }
 
+void ShaderProgram::setUniform1i(const char* name, int val)
+{
+	glUniform1iv(getUniform(name), 1, &val);
+}
+void ShaderProgram::setUniform1u(const char* name, unsigned int val)
+{
+	glUniform1uiv(getUniform(name), 1, &val);
+}
+
 void ShaderProgram::setUniformMat4fv(const char* name, glm::mat4& matrix) {
 	glUniformMatrix4fv(getUniform(name), 1, GL_FALSE, glm::value_ptr(matrix));
 }
