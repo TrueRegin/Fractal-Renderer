@@ -29,7 +29,7 @@ VIEW_LEFT = c().AXIS_SIZE.x * c().CELL_WIDTH / -2,
 VIEW_BOTTOM = c().AXIS_SIZE.y * c().CELL_WIDTH / -2,
 VIEW_TOP = c().AXIS_SIZE.y * c().CELL_WIDTH / 2;
 
-int max_itrs = 20;
+int max_itrs = 600;
 int approx_itrs = 100;
 float approx_itrs_scale = 1;
 bool max_itrs_approx_func = false;
@@ -239,8 +239,6 @@ int main() {
 
 		// Program Loop
 		programLoop(window, [&shader, &modelMat, &realComponent, &imaginaryComponent, &rFac, &gFac, &bFac, &window]() {
-			max_itrs -= max_itrs - std::floor(max_itrs);
-
 			if (showMenu) {
 				ImGui::Begin("Modify the fractal!");
 				ImGui::SliderFloat("Real Component", &realComponent, -4, 4);
@@ -268,6 +266,10 @@ int main() {
 					mandelbrotMode = !mandelbrotMode;
 				}
 				ImGui::End();
+			}
+
+			if (max_itrs_approx_func > 1000) {
+				max_itrs_approx_func = max_itrs;
 			}
 
 			shader.setUniform1f("r_Comp", realComponent);
