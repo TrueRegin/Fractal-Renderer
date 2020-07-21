@@ -105,8 +105,6 @@ void mouse_position_callback(GLFWwindow* window, double xpos, double ypos)
 
 		clampPanArea(newX, newY);
 
-		printf("%f %f\n", newX, newY);
-
 		currX = newX;
 		currY = newY;
 	}
@@ -269,7 +267,7 @@ int main() {
 			}
 
 			if (max_itrs_approx_func > 1000 * approx_itrs_scale) {
-				max_itrs_approx_func = max_itrs;
+				approx_itrs = max_itrs * approx_itrs_scale;
 			}
 
 			shader.setUniform1f("r_Comp", realComponent);
