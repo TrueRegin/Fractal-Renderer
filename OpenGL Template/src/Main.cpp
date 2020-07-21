@@ -268,7 +268,7 @@ int main() {
 				ImGui::End();
 			}
 
-			if (max_itrs_approx_func > 1000) {
+			if (max_itrs_approx_func > 1000 * approx_itrs_scale) {
 				max_itrs_approx_func = max_itrs;
 			}
 
